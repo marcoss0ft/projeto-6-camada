@@ -1,52 +1,69 @@
-
-#importe as bibliotecas
 from suaBibSignal import *
 import numpy as np
 import sounddevice as sd
 import matplotlib.pyplot as plt
 
-#funções caso queriram usar para sair...
-def signal_handler(signal, frame):
-        print('You pressed Ctrl+C!')
-        sys.exit(0)
 
-#converte intensidade em Db, caso queiram ...
+frequencias_dtmf = {
+    '1': (697, 1209), '2': (697, 1336), '3': (697, 1477),
+    '4': (770, 1209), '5': (770, 1336), '6': (770, 1477),
+    '7': (852, 1209), '8': (852, 1336), '9': (852, 1477),
+    '0': (941, 1336)
+}
+
+
 def todB(s):
-    sdB = 10*np.log10(s)
-    return(sdB)
+    sdB = 10 * np.log10(s)
+    return sdB
 
 
+def gerar_sinal_dtmf(tecla, duration=2, samplerate=44100):
+    f1, f2 = frequencias_dtmf[tecla] 
+    t = np.linspace(0, duration, int(samplerate * duration), endpoint=False)  
+    senoide1 = np.sin(2 * np.pi * f1 * t) 
+    senoide2 = np.sin(2 * np.pi * f2 * t)  
+    sinal = senoide1 + senoide2  
+    return sinal, t
 
 
 def main():
-    
-   
-    #********************************************instruções*********************************************** 
-    # Seu objetivo aqui é gerar duas senoides. Cada uma com frequencia corresposndente à tecla pressionada, conforme tabela DTMF.
-    # Então, inicialmente peça ao usuário para digitar uma tecla do teclado numérico DTMF.
-    # De posse das duas frequeências, agora voce tem que gerar, por alguns segundos suficientes para a outra aplicação gravar o audio, duas senoides com as frequencias corresposndentes à tecla pressionada.
-    # Essas senoides têm que ter taxa de amostragem de 44100 amostras por segundo, sendo assim, voce tera que gerar uma lista de tempo correspondente a isso e entao gerar as senoides
-    # Lembre-se que a senoide pode ser construída com A*sin(2*pi*f*t).
-    # O tamanho da lista tempo estará associada à duração do som. A intensidade é controlada pela constante A (amplitude da senoide). Construa com amplitude 1.
-    # Some as duas senoides. A soma será o sinal a ser emitido.
-    # Utilize a funcao da biblioteca sounddevice para reproduzir o som. Entenda seus argumento.
-    # Você pode gravar o som com seu celular ou qualquer outro microfone para o lado receptor decodificar depois. Ou reproduzir enquanto o receptor já capta e decodifica.
-    
-    # construa o gráfico do sinal emitido e o gráfico da transformada de Fourier. Cuidado, como as frequencias sao relativamente altas, voce deve plotar apenas alguns pontos (alguns periodos) para conseguirmos ver o sinal
-    
     print("Inicializando encoder")
     print("Aguardando usuário")
+    
+
+    tecla = input("Digite um número de 0 a 9: ")
+    if tecla not in frequencias_dtmf:
+        print("Tecla inválida! Digite um número de 0 a 9.")
+        return
+    
     print("Gerando Tons base")
-    print("Executando as senoides (emitindo o som)")
-    print("Gerando Tom referente ao símbolo : {}".format(NUM))
-    sd.play(tone, fs)
-    # aguarda fim do audio
-    sd.wait()
     
-    plotFFT(self, signal, fs)
-    # Exibe gráficos
+
+    duration = 2
+    fs = 44100  
+    tone, t = gerar_sinal_dtmf(tecla, duration, fs)
+    
+    print(f"Executando as senoides (emitindo o som) para a tecla: {tecla}")
+    sd.play(tone, fs) 
+    sd.wait()  
+    
+
+    print("Gerando gráfico do sinal no domínio do tempo")
+    plt.figure()
+    plt.plot(t[:1000], tone[:1000]) 
+    plt.title(f"Sinal DTMF no tempo - Tecla {tecla}")
+    plt.xlabel("Tempo [s]")
+    plt.ylabel("Amplitude")
+    plt.grid(True)
     plt.show()
-    
+
+
+    signal = signalMeu()  
+    print("Gerando FFT e plotando gráfico das frequências emitidas")
+    signal.plotFFT(tone, fs)  
+    plt.show()
+
+    return  
 
 if __name__ == "__main__":
     main()
